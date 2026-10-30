@@ -40,14 +40,15 @@ fun AddEditRecipeScreen(
     recipeId: Int,          // -1 = adding a new recipe, otherwise editing
     onBack: () -> Unit
 ) {
-    val existing = SampleData.findById(recipeId)
+    val existing = RecipeRepository.findById(recipeId)
     val isEditing = existing != null
 
     // Pre-fill the form when editing; empty when adding
     var title by remember { mutableStateOf(existing?.title ?: "") }
-    var category by remember { mutableStateOf(existing?.category ?: SampleData.categories.first()) }
+    var category by remember { mutableStateOf(existing?.category ?: RecipeRepository.categories.first()) }
     var ingredients by remember { mutableStateOf(existing?.ingredients?.joinToString("\n") ?: "") }
     var steps by remember { mutableStateOf(existing?.steps?.joinToString("\n") ?: "") }
+    var titleError by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -81,8 +82,17 @@ fun AddEditRecipeScreen(
         ) {
             OutlinedTextField(
                 value = title,
-                onValueChange = { title = it },
+                onValueChange = {
+                    title = it
+                    if (it.isNotBlank()) titleError = false
+                },
                 label = { Text("🍽️ Recipe name") },
+                isError = titleError,
+                supportingText = {
+                    if (titleError) {
+                        Text("Please enter a recipe title 💕", color = MaterialTheme.colorScheme.error)
+                    }
+                },
                 singleLine = true,
                 shape = RoundedCornerShape(22.dp),
                 colors = cuteFieldColors(),
@@ -94,7 +104,7 @@ fun AddEditRecipeScreen(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                SampleData.categories.forEach { c ->
+                RecipeRepository.categories.forEach { c ->
                     CuteChip(
                         label = "${categoryEmoji(c)} $c",
                         selected = category == c,
@@ -123,14 +133,41 @@ fun AddEditRecipeScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Part 1: doesn't save yet, just goes back
             Button(
-                onClick = onBack,
+                onClick = {
+                    if (title.isBlank()) {
+                        titleError = true
+                    } else {
+                        val ingredientList = ingredients.lines().map { it.trim() }.filter { it.isNotEmpty() }
+                        val stepList = steps.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
+                        if (isEditing) {
+                            RecipeRepository.updateRecipe(
+                                id = recipeId,
+                                title = title.trim(),
+                                category = category,
+                                ingredients = ingredientList,
+                                steps = stepList
+                            )
+                        } else {
+                            RecipeRepository.addRecipe(
+                                title = title.trim(),
+                                category = category,
+                                ingredients = ingredientList,
+                                steps = stepList
+                            )
+                        }
+                        onBack()
+                    }
+                },
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = DeepRose),
                 modifier = Modifier.fillMaxWidth().height(54.dp)
             ) {
-                Text("Save Recipe 💕", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    if (isEditing) "Update Recipe 💕" else "Save Recipe 💕",
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
 
             Spacer(Modifier.height(24.dp))

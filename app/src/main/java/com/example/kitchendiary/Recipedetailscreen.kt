@@ -52,9 +52,7 @@ fun RecipeDetailScreen(
     onEdit: () -> Unit,
     onDeleted: () -> Unit
 ) {
-    val recipe = SampleData.findById(recipeId)
-    // Local-only toggle for Part 1 (not saved anywhere)
-    var isFavorite by remember { mutableStateOf(recipe?.isFavorite ?: false) }
+    val recipe = RecipeRepository.findById(recipeId)
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -72,18 +70,20 @@ fun RecipeDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { isFavorite = !isFavorite }) {
-                        Icon(
-                            if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Toggle favorite",
-                            tint = DeepRose
-                        )
-                    }
-                    IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = DeepRose)
-                    }
-                    IconButton(onClick = { showDeleteDialog = true }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = DeepRose)
+                    if (recipe != null) {
+                        IconButton(onClick = { RecipeRepository.toggleFavorite(recipe.id) }) {
+                            Icon(
+                                if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Toggle favorite",
+                                tint = DeepRose
+                            )
+                        }
+                        IconButton(onClick = onEdit) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = DeepRose)
+                        }
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = DeepRose)
+                        }
                     }
                 }
             )
@@ -157,8 +157,11 @@ fun RecipeDetailScreen(
                                     modifier = Modifier.size(28.dp).background(DeepRose, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text("${i + 1}", color = Color.White,
-                                        style = MaterialTheme.typography.labelMedium)
+                                    Text(
+                                        "${i + 1}",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
                                 }
                                 Text(step, modifier = Modifier.padding(start = 12.dp, top = 2.dp))
                             }
@@ -171,16 +174,17 @@ fun RecipeDetailScreen(
         }
     }
 
-    if (showDeleteDialog) {
+    if (showDeleteDialog && recipe != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             shape = RoundedCornerShape(28.dp),
             containerColor = Color.White,
             title = { Text("Delete this recipe? 🥺") },
-            text = { Text("This will permanently remove it from your diary.") },
+            text = { Text("This will permanently remove '${recipe.title}' from your diary.") },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
+                    RecipeRepository.deleteRecipe(recipe.id)
                     onDeleted()
                 }) { Text("Delete", color = DeepRose) }
             },
