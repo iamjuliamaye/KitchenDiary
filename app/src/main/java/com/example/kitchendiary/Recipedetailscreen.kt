@@ -92,7 +92,8 @@ fun RecipeDetailScreen(
     recipeId: Int,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onDeleted: () -> Unit
+    onDeleted: () -> Unit,
+    onShowSnackbar: (String) -> Unit = {}
 ) {
     val recipe = RecipeRepository.findById(recipeId)
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -129,7 +130,10 @@ fun RecipeDetailScreen(
                 },
                 actions = {
                     if (recipe != null) {
-                        IconButton(onClick = { RecipeRepository.toggleFavorite(recipe.id) }) {
+                        IconButton(onClick = {
+                            val isFav = RecipeRepository.toggleFavorite(recipe.id)
+                            onShowSnackbar(if (isFav) "Added to Favorites! 💖" else "Removed from Favorites 💔")
+                        }) {
                             Icon(
                                 if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                 contentDescription = "Toggle favorite",

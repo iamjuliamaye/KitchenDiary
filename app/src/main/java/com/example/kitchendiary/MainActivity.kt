@@ -12,6 +12,7 @@ import com.example.kitchendiary.ui.theme.KitchenDiaryTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        RecipeRepository.init(applicationContext)
         setContent {
             var isDarkTheme by remember { mutableStateOf(false) }
             KitchenDiaryTheme(darkTheme = isDarkTheme) {

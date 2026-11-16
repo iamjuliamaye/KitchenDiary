@@ -12,9 +12,13 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -22,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import kotlinx.coroutines.launch
 
 @Composable
 fun KitchenDiaryApp(
@@ -32,7 +37,16 @@ fun KitchenDiaryApp(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    // Bottom bar only appears on the two top-level screens
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    val showSnackbar: (String) -> Unit = { message ->
+        scope.launch {
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
+
     val showBottomBar = currentRoute == Routes.HOME || currentRoute == Routes.FAVORITES
 
     val navColors = NavigationBarItemDefaults.colors(
@@ -45,6 +59,7 @@ fun KitchenDiaryApp(
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
@@ -105,7 +120,11 @@ fun KitchenDiaryApp(
                     recipeId = id,
                     onBack = { navController.popBackStack() },
                     onEdit = { navController.navigate(Routes.addEdit(id)) },
-                    onDeleted = { navController.popBackStack() }
+                    onDeleted = {
+                        showSnackbar("Recipe deleted permanently 🗑️")
+                        navController.popBackStack()
+                    },
+                    onShowSnackbar = showSnackbar
                 )
             }
 
@@ -119,7 +138,8 @@ fun KitchenDiaryApp(
                 val id = entry.arguments?.getInt("recipeId") ?: -1
                 AddEditRecipeScreen(
                     recipeId = id,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onShowSnackbar = showSnackbar
                 )
             }
         }

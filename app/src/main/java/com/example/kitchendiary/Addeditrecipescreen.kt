@@ -1,5 +1,7 @@
 package com.example.kitchendiary
 
+import android.content.Context
+import android.net.Uri
 import com.example.kitchendiary.ui.theme.*
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -44,19 +46,42 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import java.io.File
+import java.io.FileOutputStream
+
+fun saveImageToInternalStorage(context: Context, uri: Uri): String? {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+        val fileName = "recipe_photo_${System.currentTimeMillis()}.jpg"
+        val file = File(context.filesDir, fileName)
+        val outputStream = FileOutputStream(file)
+        inputStream.use { input ->
+            outputStream.use { output ->
+                input.copyTo(output)
+            }
+        }
+        file.absolutePath
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditRecipeScreen(
-    recipeId: Int,          // -1 = adding a new recipe, otherwise editing
-    onBack: () -> Unit
+    recipeId: Int,
+    onBack: () -> Unit,
+    onShowSnackbar: (String) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val existing = RecipeRepository.findById(recipeId)
     val isEditing = existing != null
 
-    // Pre-fill the form when editing; empty when adding
+
     var title by remember { mutableStateOf(existing?.title ?: "") }
     var category by remember { mutableStateOf(existing?.category ?: RecipeRepository.categories.first()) }
     var ingredients by remember { mutableStateOf(existing?.ingredients?.joinToString("\n") ?: "") }
@@ -68,7 +93,10 @@ fun AddEditRecipeScreen(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            imageUri = uri.toString()
+            val permanentPath = saveImageToInternalStorage(context, uri)
+            if (permanentPath != null) {
+                imageUri = permanentPath
+            }
         }
     }
 
@@ -217,6 +245,7 @@ fun AddEditRecipeScreen(
                                 steps = stepList,
                                 imageUri = imageUri
                             )
+                            onShowSnackbar("Recipe '$title' updated successfully! ✏️")
                         } else {
                             RecipeRepository.addRecipe(
                                 title = title.trim(),
@@ -225,6 +254,7 @@ fun AddEditRecipeScreen(
                                 steps = stepList,
                                 imageUri = imageUri
                             )
+                            onShowSnackbar("Recipe '$title' added successfully! 🍓")
                         }
                         onBack()
                     }
