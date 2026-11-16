@@ -1,6 +1,5 @@
 package com.example.kitchendiary
 
-
 import com.example.kitchendiary.ui.theme.*
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
@@ -8,15 +7,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -25,7 +24,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 
 @Composable
-fun KitchenDiaryApp() {
+fun KitchenDiaryApp(
+    isDarkTheme: Boolean = false,
+    onToggleDarkTheme: () -> Unit = {}
+) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -42,11 +44,10 @@ fun KitchenDiaryApp() {
     )
 
     Scaffold(
-        // Inner screens have their own Scaffold/TopAppBar, so avoid double insets
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar(containerColor = Color.White) {
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     NavigationBarItem(
                         selected = currentRoute == Routes.HOME,
                         onClick = {
@@ -82,6 +83,8 @@ fun KitchenDiaryApp() {
         ) {
             composable(Routes.HOME) {
                 RecipeListScreen(
+                    isDarkTheme = isDarkTheme,
+                    onToggleDarkTheme = onToggleDarkTheme,
                     onRecipeClick = { id -> navController.navigate(Routes.detail(id)) },
                     onAddClick = { navController.navigate(Routes.addEdit()) }
                 )

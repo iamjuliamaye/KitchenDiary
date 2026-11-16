@@ -16,10 +16,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -38,16 +44,21 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun RecipeListScreen(
+    isDarkTheme: Boolean = false,
+    onToggleDarkTheme: () -> Unit = {},
     onRecipeClick: (Int) -> Unit,
     onAddClick: () -> Unit
 ) {
     var query by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("All") }
+    var selectedSort by remember { mutableStateOf(SortOption.TITLE_ASC) }
+    var sortMenuExpanded by remember { mutableStateOf(false) }
 
-    val filteredRecipes = SampleData.recipes.filter { recipe ->
-        (selectedCategory == "All" || recipe.category == selectedCategory) &&
-        (query.isBlank() || recipe.title.contains(query, ignoreCase = true))
-    }
+    val filteredRecipes = RecipeRepository.getSortedFilteredRecipes(
+        query = query,
+        selectedCategory = selectedCategory,
+        sortOption = selectedSort
+    )
 
     Scaffold(
         floatingActionButton = {
@@ -67,10 +78,24 @@ fun RecipeListScreen(
                 .padding(padding)
                 .padding(horizontal = 20.dp)
         ) {
-            CuteHeader(
-                title = "Kitchen Diary 🍓",
-                subtitle = "what are we cooking today?"
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CuteHeader(
+                    title = "Kitchen Diary 🍓",
+                    subtitle = "what are we cooking today?",
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = onToggleDarkTheme) {
+                    Icon(
+                        imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                        contentDescription = "Toggle Theme",
+                        tint = DeepRose
+                    )
+                }
+            }
 
             OutlinedTextField(
                 value = query,
@@ -84,18 +109,45 @@ fun RecipeListScreen(
             )
 
             Row(
-                modifier = Modifier
-                    .horizontalScroll(rememberScrollState())
-                    .padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                CuteChip("✨ All", selectedCategory == "All") { selectedCategory = "All" }
-                SampleData.categories.forEach { category ->
-                    CuteChip(
-                        label = "${categoryEmoji(category)} $category",
-                        selected = selectedCategory == category,
-                        selectedColor = categoryColor(category)
-                    ) { selectedCategory = category }
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .horizontalScroll(rememberScrollState())
+                        .padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CuteChip("✨ All", selectedCategory == "All") { selectedCategory = "All" }
+                    RecipeRepository.categories.forEach { category ->
+                        CuteChip(
+                            label = "${categoryEmoji(category)} $category",
+                            selected = selectedCategory == category,
+                            selectedColor = categoryColor(category)
+                        ) { selectedCategory = category }
+                    }
+                }
+
+                Box {
+                    IconButton(onClick = { sortMenuExpanded = true }) {
+                        Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort Options", tint = DeepRose)
+                    }
+                    DropdownMenu(
+                        expanded = sortMenuExpanded,
+                        onDismissRequest = { sortMenuExpanded = false }
+                    ) {
+                        SortOption.entries.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option.label) },
+                                onClick = {
+                                    selectedSort = option
+                                    sortMenuExpanded = false
+                                }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -104,7 +156,7 @@ fun RecipeListScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("🍳", fontSize = 64.sp)
                         Text(
-                            "No recipes yet",
+                            "No recipes found",
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.primary
                         )

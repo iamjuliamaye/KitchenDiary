@@ -1,8 +1,12 @@
 package com.example.kitchendiary
 
 import com.example.kitchendiary.ui.theme.*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,12 +18,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,9 +39,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +61,16 @@ fun AddEditRecipeScreen(
     var category by remember { mutableStateOf(existing?.category ?: RecipeRepository.categories.first()) }
     var ingredients by remember { mutableStateOf(existing?.ingredients?.joinToString("\n") ?: "") }
     var steps by remember { mutableStateOf(existing?.steps?.joinToString("\n") ?: "") }
+    var imageUri by remember { mutableStateOf(existing?.imageUri) }
     var titleError by remember { mutableStateOf(false) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            imageUri = uri.toString()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -113,6 +135,51 @@ fun AddEditRecipeScreen(
                 }
             }
 
+            Text("Recipe Photo 📷", style = MaterialTheme.typography.titleMedium)
+            if (!imageUri.isNullOrEmpty()) {
+                Card(
+                    shape = RoundedCornerShape(26.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        AsyncImage(
+                            model = imageUri,
+                            contentDescription = "Recipe Photo",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                                .clip(RoundedCornerShape(26.dp))
+                        )
+                        IconButton(
+                            onClick = { imageUri = null },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Remove photo", tint = Color.White)
+                        }
+                    }
+                }
+            } else {
+                OutlinedButton(
+                    onClick = {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    shape = RoundedCornerShape(22.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp)
+                ) {
+                    Icon(Icons.Default.AddAPhoto, contentDescription = null, tint = DeepRose)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Select Photo from Gallery 🖼️", color = DeepRose)
+                }
+            }
+
             OutlinedTextField(
                 value = ingredients,
                 onValueChange = { ingredients = it },
@@ -147,14 +214,16 @@ fun AddEditRecipeScreen(
                                 title = title.trim(),
                                 category = category,
                                 ingredients = ingredientList,
-                                steps = stepList
+                                steps = stepList,
+                                imageUri = imageUri
                             )
                         } else {
                             RecipeRepository.addRecipe(
                                 title = title.trim(),
                                 category = category,
                                 ingredients = ingredientList,
-                                steps = stepList
+                                steps = stepList,
+                                imageUri = imageUri
                             )
                         }
                         onBack()

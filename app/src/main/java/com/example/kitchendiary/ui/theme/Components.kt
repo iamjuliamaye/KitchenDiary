@@ -1,10 +1,8 @@
 package com.example.kitchendiary.ui.theme
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -42,8 +40,12 @@ fun categoryColor(category: String): Color = when (category) {
 }
 
 @Composable
-fun CuteHeader(title: String, subtitle: String? = null) {
-    Column(Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp)) {
+fun CuteHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null
+) {
+    Column(modifier.padding(top = 16.dp, bottom = 8.dp)) {
         Text(
             title,
             style = MaterialTheme.typography.headlineLarge,
@@ -61,12 +63,12 @@ fun CuteHeader(title: String, subtitle: String? = null) {
 
 @Composable
 fun CategoryPill(category: String) {
-    Surface(shape = RoundedCornerShape(50), color = Color.White.copy(alpha = 0.8f)) {
+    Surface(shape = RoundedCornerShape(50), color = Color.White.copy(alpha = 0.85f)) {
         Text(
             "${categoryEmoji(category)} $category",
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = Cocoa
         )
     }
 }
@@ -95,8 +97,8 @@ fun CuteChip(
         label = { Text(label) },
         shape = RoundedCornerShape(50),
         colors = FilterChipDefaults.filterChipColors(
-            containerColor = Color.White,
-            labelColor = Cocoa,
+            containerColor = MaterialTheme.colorScheme.surface,
+            labelColor = MaterialTheme.colorScheme.onSurface,
             selectedContainerColor = selectedColor,
             selectedLabelColor = Cocoa
         )
@@ -105,10 +107,13 @@ fun CuteChip(
 
 @Composable
 fun cuteFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = Color.White,
-    unfocusedContainerColor = Color.White,
+    focusedContainerColor = MaterialTheme.colorScheme.surface,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
     focusedBorderColor = RosePink,
     unfocusedBorderColor = PinkBorder,
     focusedLabelColor = DeepRose,
-    cursorColor = DeepRose
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    cursorColor = DeepRose,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
 )

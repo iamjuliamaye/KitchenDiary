@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -21,7 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 
 @Composable
 fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
@@ -40,9 +44,25 @@ fun RecipeCard(recipe: Recipe, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            EmojiBadge(categoryEmoji(recipe.category))
+            if (!recipe.imageUri.isNullOrEmpty()) {
+                AsyncImage(
+                    model = recipe.imageUri,
+                    contentDescription = recipe.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                )
+            } else {
+                EmojiBadge(categoryEmoji(recipe.category))
+            }
+
             Column(modifier = Modifier.weight(1f)) {
-                Text(recipe.title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    recipe.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Cocoa
+                )
                 Spacer(Modifier.height(4.dp))
                 CategoryPill(recipe.category)
             }

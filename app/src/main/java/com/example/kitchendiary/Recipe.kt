@@ -2,13 +2,23 @@ package com.example.kitchendiary
 
 import androidx.compose.runtime.mutableStateListOf
 
+enum class SortOption(val label: String) {
+    TITLE_ASC("A–Z 🔤"),
+    TITLE_DESC("Z–A 🔤"),
+    DATE_NEWEST("Newest 📅"),
+    DATE_OLDEST("Oldest 📅"),
+    CATEGORY("Category 🏷️")
+}
+
 data class Recipe(
     val id: Int,
     val title: String,
     val category: String,
     val ingredients: List<String>,
     val steps: List<String>,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val imageUri: String? = null,
+    val dateAdded: Long = System.currentTimeMillis()
 )
 
 object RecipeRepository {
@@ -33,7 +43,8 @@ object RecipeRepository {
                 "Cook until bubbles form on top, flip and cook until golden brown.",
                 "Top with fresh strawberries and maple syrup, then enjoy!"
             ),
-            isFavorite = true
+            isFavorite = true,
+            dateAdded = System.currentTimeMillis() - 3000000
         ),
         Recipe(
             id = 2,
@@ -52,7 +63,8 @@ object RecipeRepository {
                 "Whisk eggs and parmesan together in a small bowl.",
                 "Combine hot pasta, pancetta, and egg mixture off the heat, tossing quickly to create a creamy sauce."
             ),
-            isFavorite = false
+            isFavorite = false,
+            dateAdded = System.currentTimeMillis() - 2000000
         ),
         Recipe(
             id = 3,
@@ -71,7 +83,8 @@ object RecipeRepository {
                 "Add eggs one at a time, then pour in heavy cream.",
                 "Bake at 160°C for 45 minutes and chill in the fridge before serving."
             ),
-            isFavorite = true
+            isFavorite = true,
+            dateAdded = System.currentTimeMillis() - 1000000
         )
     )
 
@@ -79,7 +92,13 @@ object RecipeRepository {
 
     fun findById(id: Int): Recipe? = _recipes.find { it.id == id }
 
-    fun addRecipe(title: String, category: String, ingredients: List<String>, steps: List<String>) {
+    fun addRecipe(
+        title: String,
+        category: String,
+        ingredients: List<String>,
+        steps: List<String>,
+        imageUri: String? = null
+    ) {
         val newId = (_recipes.maxOfOrNull { it.id } ?: 0) + 1
         _recipes.add(
             Recipe(
@@ -88,12 +107,21 @@ object RecipeRepository {
                 category = category,
                 ingredients = ingredients,
                 steps = steps,
-                isFavorite = false
+                isFavorite = false,
+                imageUri = imageUri,
+                dateAdded = System.currentTimeMillis()
             )
         )
     }
 
-    fun updateRecipe(id: Int, title: String, category: String, ingredients: List<String>, steps: List<String>) {
+    fun updateRecipe(
+        id: Int,
+        title: String,
+        category: String,
+        ingredients: List<String>,
+        steps: List<String>,
+        imageUri: String? = null
+    ) {
         val index = _recipes.indexOfFirst { it.id == id }
         if (index != -1) {
             val old = _recipes[index]
@@ -101,7 +129,8 @@ object RecipeRepository {
                 title = title.ifBlank { "Untitled Recipe" },
                 category = category,
                 ingredients = ingredients,
-                steps = steps
+                steps = steps,
+                imageUri = imageUri
             )
         }
     }
@@ -115,6 +144,25 @@ object RecipeRepository {
         if (index != -1) {
             val old = _recipes[index]
             _recipes[index] = old.copy(isFavorite = !old.isFavorite)
+        }
+    }
+
+    fun getSortedFilteredRecipes(
+        query: String,
+        selectedCategory: String,
+        sortOption: SortOption
+    ): List<Recipe> {
+        val filtered = _recipes.filter { recipe ->
+            (selectedCategory == "All" || recipe.category == selectedCategory) &&
+            (query.isBlank() || recipe.title.contains(query, ignoreCase = true))
+        }
+
+        return when (sortOption) {
+            SortOption.TITLE_ASC -> filtered.sortedBy { it.title.lowercase() }
+            SortOption.TITLE_DESC -> filtered.sortedByDescending { it.title.lowercase() }
+            SortOption.DATE_NEWEST -> filtered.sortedByDescending { it.dateAdded }
+            SortOption.DATE_OLDEST -> filtered.sortedBy { it.dateAdded }
+            SortOption.CATEGORY -> filtered.sortedBy { it.category }
         }
     }
 }

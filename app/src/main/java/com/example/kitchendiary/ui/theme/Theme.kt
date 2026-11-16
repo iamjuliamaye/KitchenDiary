@@ -1,9 +1,11 @@
 package com.example.kitchendiary.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -31,6 +33,24 @@ private val CuteColors = lightColorScheme(
     outline = PinkBorder
 )
 
+private val DarkCuteColors = darkColorScheme(
+    primary = RosePink,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFF4A2834),
+    onPrimaryContainer = Blush,
+    secondary = BubblegumPink,
+    onSecondary = Color.Black,
+    secondaryContainer = Color(0xFF3D232A),
+    onSecondaryContainer = Blush,
+    background = Color(0xFF1E1719),
+    onBackground = Color(0xFFFDE8EF),
+    surface = Color(0xFF2B2125),
+    onSurface = Color(0xFFFDE8EF),
+    surfaceVariant = Color(0xFF38292E),
+    onSurfaceVariant = Color(0xFFD8B6C1),
+    outline = Color(0xFF5A3E48)
+)
+
 private val CuteTypography = Typography(
     headlineLarge = TextStyle(
         fontFamily = FontFamily.Cursive, fontWeight = FontWeight.Bold, fontSize = 40.sp
@@ -54,9 +74,13 @@ private val CuteShapes = Shapes(
 )
 
 @Composable
-fun KitchenDiaryTheme(content: @Composable () -> Unit) {
+fun KitchenDiaryTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    val colors = if (darkTheme) DarkCuteColors else CuteColors
     MaterialTheme(
-        colorScheme = CuteColors,
+        colorScheme = colors,
         typography = CuteTypography,
         shapes = CuteShapes,
         content = content
